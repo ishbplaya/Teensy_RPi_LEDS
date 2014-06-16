@@ -64,57 +64,49 @@ void setup() {
 #define ORANGE 0xE05800
 #define WHITE  0xFFFFFF
 #define PURPLE 0x551A8B
+#define BLANK  0x000000
+
 //Local Parameters
 String str;
 
 void loop() {
   Serial.println("Waiting for data to come by... =(");
   //Local Parameters
-  //String str;
   char charBuf[50];
   String colorName; //seperated by ';'
-  String stripNuminString; //seperated by '/'
   String pixelStartinString; //seperated by '-'
   String pixelEndinString; //seperated by '.'
-  int stripNum;
   int pixelsStart;
   int pixelsEnd;
   //delay(1000); //do not print TOO fast!
-  if(Serial.available() > 0) //Typical serial data = RED;02/000-020.\n
+  if(Serial.available() > 0) //Typical serial data = RED;000-020.\n
   {
     str = Serial.readStringUntil('\n'); //end of the string is 
     str.toCharArray(charBuf, 50);
     Serial.println(charBuf);
     int i = 0;
     boolean gotColorName = false;
-    boolean gotStripNum = false;
     boolean gotPixelStart = false;
     boolean gotPixelEnd = false;
     for (i; i < 50; i++)
     {
       if(charBuf[i] == ';' && !gotColorName)
         gotColorName = true;
-      else if (charBuf[i] == '/' && !gotStripNum)
-        gotStripNum = true;
       else if (charBuf[i] == '-' && !gotPixelStart)
         gotPixelStart = true;
       else if (charBuf[i] == '.' && !gotPixelEnd)
         gotPixelEnd = true;
-      else if (!gotColorName && !gotStripNum && !gotPixelStart && !gotPixelEnd)
+      else if (!gotColorName && !gotPixelStart && !gotPixelEnd)
         colorName += charBuf[i];
-      else if (gotColorName && !gotStripNum && !gotPixelStart && !gotPixelEnd)
-        stripNuminString += charBuf[i];
-      else if (gotColorName && gotStripNum && !gotPixelStart && !gotPixelEnd)
+      else if (gotColorName && !gotPixelStart && !gotPixelEnd)
         pixelStartinString += charBuf[i];
-      else if (gotColorName && gotStripNum && gotPixelStart && !gotPixelEnd)
+      else if (gotColorName && gotPixelStart && !gotPixelEnd)
         pixelEndinString += charBuf[i];
     }
-    stripNum = stripNuminString.toInt(); //convert from String to Int
     pixelsStart = pixelStartinString.toInt();
     pixelsEnd = pixelEndinString.toInt();
     
     Serial.println("str is : " + str + "|| colorName is : " + colorName+
-              "|| stripNuminString is : " + stripNuminString
             + "|| pixelsStart is : " + pixelStartinString + 
             "|| pixelsEnd is: " + pixelEndinString +"\n");
   }
@@ -124,52 +116,54 @@ void loop() {
   // uncomment for voltage controlled speed
   // millisec = analogRead(A9) / 40;
   str = colorName;
-  if(str == "come on!") {
+  if(str == "color wipe") {
     colorWipe(RED, microsec);
     colorWipe(GREEN, microsec);
     colorWipe(BLUE, microsec);
     colorWipe(PURPLE, microsec);
-    
+  }
+  else if(str == "theater chase") {
     theaterChase(RED, microsec);
     theaterChase(GREEN, microsec);
     theaterChase(BLUE, microsec);
     theaterChase(PURPLE, microsec);
-    
-    rainbow(20);
+  }
+  else if(str == "rainbow") {
+    rainbow(10, 2500);
     rainbowCycle(20);
     theaterChaseRainbow(50);
   }
   else if(str == "RED") {
     //colorWipe(RED, microsec);
-    setBomb(RED, microsec, stripNum, pixelsStart, pixelsEnd);
+    setBomb(RED, microsec, pixelsStart, pixelsEnd);
   }
   else if(str == "GREEN") {
     //colorWipe(GREEN, microsec);
-    setBomb(GREEN, microsec, stripNum, pixelsStart, pixelsEnd);
+    setBomb(GREEN, microsec, pixelsStart, pixelsEnd);
   }
   else if (str == "BLUE") {
     //colorWipe(BLUE, microsec);
-    setBomb(BLUE, microsec, stripNum, pixelsStart, pixelsEnd);
+    setBomb(BLUE, microsec,  pixelsStart, pixelsEnd);
   }
   else if (str == "YELLOW") {
     //colorWipe(YELLOW, microsec);
-    setBomb(YELLOW, microsec, stripNum, pixelsStart, pixelsEnd);
+    setBomb(YELLOW, microsec, pixelsStart, pixelsEnd);
   }
   else if (str == "PINK") {
     //colorWipe(PINK, microsec);
-    setBomb(PINK, microsec, stripNum, pixelsStart, pixelsEnd);
+    setBomb(PINK, microsec, pixelsStart, pixelsEnd);
   }
   else if (str == "ORANGE") {
     //colorWipe(ORANGE, microsec);
-    setBomb(ORANGE, microsec, stripNum, pixelsStart, pixelsEnd);
+    setBomb(ORANGE, microsec,  pixelsStart, pixelsEnd);
   }
   else if (str == "WHITE") {
     //colorWipe(WHITE, microsec);
-    setBomb(WHITE, microsec, stripNum, pixelsStart, pixelsEnd);
+    setBomb(WHITE, microsec,  pixelsStart, pixelsEnd);
   }
   else {
     //colorWipe(PURPLE, microsec);
-    setBomb(PURPLE, microsec, stripNum, pixelsStart, pixelsEnd);
+    setBomb(PURPLE, microsec,  pixelsStart, pixelsEnd);
   }
   delay(1000);
 }
@@ -183,27 +177,99 @@ void colorWipe(int color, int wait)
   }
 }
 
-void setBomb(int color, int wait, int strip, int pixelStart, int pixelEnd)
+void setBomb(int color, int wait, int pixelStart, int pixelEnd)
 {
-  for (int i=pixelStart; i < pixelEnd; i++) {
-    leds.setPixel(i, color);
+  for (int i=0; i < leds.numPixels(); i++) {
+    if(i > pixelStart && i < pixelEnd) {
+         leds.setPixel(i, color); 
+    }
+    else {
+         leds.setPixel(i, BLANK);
+    }
     leds.show();
     delayMicroseconds(wait);
   }
 }
 
-//from NEOPIXEL LIBRARY
-void rainbow(uint8_t wait) {
-  uint16_t i, j;
+int rainbowColors[180];
+void rainbow_setup(uint8_t wait) {
+  pinMode(1, OUTPUT);
+  digitalWrite(1, HIGH);
+  for (int i=0; i<180; i++) {
+    int hue = i * 2;
+    int saturation = 100;
+    int lightness = 50;
+    // pre-compute the 180 rainbow colors
+    rainbowColors[i] = makeColor(hue, saturation, lightness);
+  }
+  digitalWrite(1, LOW);
+  leds.begin();
+}
 
-  for(j=0; j<256; j++) {
-    for(i=0; i<leds.numPixels(); i++) {
-      leds.setPixel(i, 255);
+void rainbow(int phaseShift, int cycleTime)
+{
+  int color, x, y, offset, wait;
+
+  wait = cycleTime * 1000 / ledsPerStrip;
+  for (color=0; color < 180; color++) {
+    digitalWrite(1, HIGH);
+    for (x=0; x < ledsPerStrip; x++) {
+      for (y=0; y < 8; y++) {
+        int index = (color + x + y*phaseShift/2) % 180;
+        leds.setPixel(x + y*ledsPerStrip, rainbowColors[index]);
+      }
     }
     leds.show();
-    delay(wait);
+    digitalWrite(1, LOW);
+    delayMicroseconds(wait);
   }
 }
+
+// Convert HSL (Hue, Saturation, Lightness) to RGB (Red, Green, Blue)
+//
+//   hue:        0 to 359 - position on the color wheel, 0=red, 60=orange,
+//                            120=yellow, 180=green, 240=blue, 300=violet
+//
+//   saturation: 0 to 100 - how bright or dull the color, 100=full, 0=gray
+//
+//   lightness:  0 to 100 - how light the color is, 100=white, 50=color, 0=black
+//
+int makeColor(unsigned int hue, unsigned int saturation, unsigned int lightness)
+{
+	unsigned int red, green, blue;
+	unsigned int var1, var2;
+
+	if (hue > 359) hue = hue % 360;
+	if (saturation > 100) saturation = 100;
+	if (lightness > 100) lightness = 100;
+
+	// algorithm from: http://www.easyrgb.com/index.php?X=MATH&H=19#text19
+	if (saturation == 0) {
+		red = green = blue = lightness * 255 / 100;
+	} else {
+		if (lightness < 50) {
+			var2 = lightness * (100 + saturation);
+		} else {
+			var2 = ((lightness + saturation) * 100) - (saturation * lightness);
+		}
+		var1 = lightness * 200 - var2;
+		red = h2rgb(var1, var2, (hue < 240) ? hue + 120 : hue - 240) * 255 / 600000;
+		green = h2rgb(var1, var2, hue) * 255 / 600000;
+		blue = h2rgb(var1, var2, (hue >= 120) ? hue - 120 : hue + 240) * 255 / 600000;
+	}
+	return (red << 16) | (green << 8) | blue;
+}
+
+unsigned int h2rgb(unsigned int v1, unsigned int v2, unsigned int hue)
+{
+	if (hue < 60) return v1 * 60 + (v2 - v1) * hue;
+	if (hue < 180) return v2 * 60;
+	if (hue < 240) return v1 * 60 + (v2 - v1) * (240 - hue);
+	return v1 * 60;
+}
+
+// alternate code:
+// http://forum.pjrc.com/threads/16469-looking-for-ideas-on-generating-RGB-colors-from-accelerometer-gyroscope?p=37170&viewfull=1#post37170
 
 // Slightly different, this makes the rainbow equally distributed throughout 
 //from NEOPIXEL LIBRARY
