@@ -65,6 +65,7 @@ void setup() {
 #define WHITE  0xFFFFFF
 #define PURPLE 0x551A8B
 #define BLANK  0x000000
+#define AQUA   0x00FFFF
 
 //Local Parameters
 String str;
@@ -129,37 +130,42 @@ void loop() {
     theaterChase(PURPLE, microsec);
   }
   else if(str == "rainbow") {
+    rainbow_setup(20);
     rainbow(10, 2500);
     rainbowCycle(20);
     theaterChaseRainbow(50);
   }
-  else if(str == "RED") {
+  else if(str == "RED" || str =="red") {
     //colorWipe(RED, microsec);
     setBomb(RED, microsec, pixelsStart, pixelsEnd);
   }
-  else if(str == "GREEN") {
+  else if(str == "GREEN" || str == "green") {
     //colorWipe(GREEN, microsec);
     setBomb(GREEN, microsec, pixelsStart, pixelsEnd);
   }
-  else if (str == "BLUE") {
+  else if (str == "BLUE" || str == "blue") {
     //colorWipe(BLUE, microsec);
     setBomb(BLUE, microsec,  pixelsStart, pixelsEnd);
   }
-  else if (str == "YELLOW") {
+  else if (str == "YELLOW" || str == "yellow") {
     //colorWipe(YELLOW, microsec);
     setBomb(YELLOW, microsec, pixelsStart, pixelsEnd);
   }
-  else if (str == "PINK") {
+  else if (str == "PINK" || str == "pink") {
     //colorWipe(PINK, microsec);
     setBomb(PINK, microsec, pixelsStart, pixelsEnd);
   }
-  else if (str == "ORANGE") {
+  else if (str == "ORANGE" || str == "orange") {
     //colorWipe(ORANGE, microsec);
     setBomb(ORANGE, microsec,  pixelsStart, pixelsEnd);
   }
-  else if (str == "WHITE") {
+  else if (str == "WHITE" || str == "white") {
     //colorWipe(WHITE, microsec);
     setBomb(WHITE, microsec,  pixelsStart, pixelsEnd);
+  }
+  else if (str == "AQUA" || str == "aqua") {
+    //colorWipe(WHITE, microsec);
+    setBomb(AQUA, microsec,  pixelsStart, pixelsEnd);
   }
   else {
     //colorWipe(PURPLE, microsec);
