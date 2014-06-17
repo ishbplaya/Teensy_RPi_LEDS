@@ -117,13 +117,13 @@ void loop() {
   // uncomment for voltage controlled speed
   // millisec = analogRead(A9) / 40;
   str = colorName;
-  if(str == "color wipe") {
+  if(str == "colorwipe") {
     colorWipe(RED, microsec);
     colorWipe(GREEN, microsec);
     colorWipe(BLUE, microsec);
     colorWipe(PURPLE, microsec);
   }
-  else if(str == "theater chase") {
+  else if(str == "theaterchase") {
     theaterChase(RED, microsec);
     theaterChase(GREEN, microsec);
     theaterChase(BLUE, microsec);
@@ -135,41 +135,41 @@ void loop() {
     rainbowCycle(20);
     theaterChaseRainbow(50);
   }
-  else if(str == "RED" || str =="red") {
+  else if(str == "RED") {
     //colorWipe(RED, microsec);
     setBomb(RED, microsec, pixelsStart, pixelsEnd);
   }
-  else if(str == "GREEN" || str == "green") {
+  else if(str == "GREEN") {
     //colorWipe(GREEN, microsec);
     setBomb(GREEN, microsec, pixelsStart, pixelsEnd);
   }
-  else if (str == "BLUE" || str == "blue") {
+  else if (str == "BLUE") {
     //colorWipe(BLUE, microsec);
     setBomb(BLUE, microsec,  pixelsStart, pixelsEnd);
   }
-  else if (str == "YELLOW" || str == "yellow") {
+  else if (str == "YELLOW") {
     //colorWipe(YELLOW, microsec);
     setBomb(YELLOW, microsec, pixelsStart, pixelsEnd);
   }
-  else if (str == "PINK" || str == "pink") {
+  else if (str == "PINK") {
     //colorWipe(PINK, microsec);
     setBomb(PINK, microsec, pixelsStart, pixelsEnd);
   }
-  else if (str == "ORANGE" || str == "orange") {
+  else if (str == "ORANGE") {
     //colorWipe(ORANGE, microsec);
     setBomb(ORANGE, microsec,  pixelsStart, pixelsEnd);
   }
-  else if (str == "WHITE" || str == "white") {
+  else if (str == "WHITE") {
     //colorWipe(WHITE, microsec);
     setBomb(WHITE, microsec,  pixelsStart, pixelsEnd);
   }
-  else if (str == "AQUA" || str == "aqua") {
+  else if (str == "AQUA") {
     //colorWipe(WHITE, microsec);
     setBomb(AQUA, microsec,  pixelsStart, pixelsEnd);
   }
   else {
     //colorWipe(PURPLE, microsec);
-    setBomb(PURPLE, microsec,  pixelsStart, pixelsEnd);
+    setBomb(str.toInt(), microsec,  pixelsStart, pixelsEnd);
   }
   delay(1000);
 }
@@ -189,9 +189,9 @@ void setBomb(int color, int wait, int pixelStart, int pixelEnd)
     if(i > pixelStart && i < pixelEnd) {
          leds.setPixel(i, color); 
     }
-    else {
-         leds.setPixel(i, BLANK);
-    }
+//    else {
+//         leds.setPixel(i, BLANK);
+//    }
     leds.show();
     delayMicroseconds(wait);
   }
@@ -314,7 +314,7 @@ void theaterChaseRainbow(uint8_t wait) {
   for (int j=0; j < 256; j++) {     // cycle all 256 colors in the wheel
     for (int q=0; q < 3; q++) {
         for (int i=0; i < leds.numPixels(); i=i+3) {
-          leds.setPixel(i+q, (i+j) % 255);    //turn every third pixel on
+          leds.setPixel(i+q, (i+j));    //turn every third pixel on
         }
         leds.show();
        
