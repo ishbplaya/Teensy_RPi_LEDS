@@ -69,109 +69,109 @@ void setup() {
 
 //Local Parameters
 String str;
+char charBuf[100];
 
 void loop() {
   Serial.println("Waiting for data to come by... =(");
-  //Local Parameters
-  char charBuf[50];
-  String colorName; //seperated by ';'
-  String pixelStartinString; //seperated by '-'
-  String pixelEndinString; //seperated by '.'
-  int pixelsStart;
-  int pixelsEnd;
+ 
   //delay(1000); //do not print TOO fast!
-  if(Serial.available() > 0) //Typical serial data = RED;000-020.\n
+  if(Serial.available() > 1) //Typical serial data = RED,000,020;
   {
-    str = Serial.readStringUntil('\n'); //end of the string is 
-    str.toCharArray(charBuf, 50);
+    str = Serial.readString();
+    str.toCharArray(charBuf, 100);
     Serial.println(charBuf);
-    int i = 0;
-    boolean gotColorName = false;
-    boolean gotPixelStart = false;
-    boolean gotPixelEnd = false;
-    for (i; i < 50; i++)
-    {
-      if(charBuf[i] == ';' && !gotColorName)
-        gotColorName = true;
-      else if (charBuf[i] == '-' && !gotPixelStart)
-        gotPixelStart = true;
-      else if (charBuf[i] == '.' && !gotPixelEnd)
-        gotPixelEnd = true;
-      else if (!gotColorName && !gotPixelStart && !gotPixelEnd)
-        colorName += charBuf[i];
-      else if (gotColorName && !gotPixelStart && !gotPixelEnd)
-        pixelStartinString += charBuf[i];
-      else if (gotColorName && gotPixelStart && !gotPixelEnd)
-        pixelEndinString += charBuf[i];
-    }
-    pixelsStart = pixelStartinString.toInt();
-    pixelsEnd = pixelEndinString.toInt();
-    
-    Serial.println("str is : " + str + "|| colorName is : " + colorName+
-            + "|| pixelsStart is : " + pixelStartinString + 
-            "|| pixelsEnd is: " + pixelEndinString +"\n");
-  }
-  
-  int microsec = 2000000 / leds.numPixels();  // change them all in 2 seconds
+    char *p = charBuf;
+    char *str;
+    while ((str = strtok_r(p, ";", &p)) != NULL) {// delimiter is the semicolon
+       
+      String colorName = getValue(str,',',0);
+      int pixelsStart = getValue(str,',',1).toInt();
+      int pixelsEnd = getValue(str,',',2).toInt();
+      Serial.println("Color :" + getValue(str,',',0));
+      Serial.println("Start Pixel :" + getValue(str,',',1));
+      Serial.println("End Pixel :" + getValue(str,',',2));
+      int microsec = 100000 / leds.numPixels();  // change them all in 0.1 seconds
 
-  // uncomment for voltage controlled speed
-  // millisec = analogRead(A9) / 40;
-  str = colorName;
-  if(str == "colorwipe") {
-    colorWipe(RED, microsec);
-    colorWipe(GREEN, microsec);
-    colorWipe(BLUE, microsec);
-    colorWipe(PURPLE, microsec);
+      // uncomment for voltage controlled speed
+      // millisec = analogRead(A9) / 40;
+      if(colorName == "clearall" || colorName == "ClearAll")
+      {
+        colorWipe(BLANK, microsec);
+      }
+      else if(colorName == "colorwipe") {
+        colorWipe(RED, microsec);
+        colorWipe(GREEN, microsec);
+        colorWipe(BLUE, microsec);
+        colorWipe(PURPLE, microsec);
+      }
+      else if(colorName == "theaterchase") {
+        theaterChase(RED, microsec);
+        theaterChase(GREEN, microsec);
+        theaterChase(BLUE, microsec);
+        theaterChase(PURPLE, microsec);
+      }
+      else if(colorName == "rainbow") {
+        rainbow_setup(20);
+        rainbow(10, 2500);
+        rainbowCycle(20);
+        theaterChaseRainbow(50);
+      }
+      else if(colorName == "RED") {
+        //colorWipe(RED, microsec);
+        setBomb(RED, microsec, pixelsStart, pixelsEnd);
+      }
+      else if(colorName == "GREEN") {
+        //colorWipe(GREEN, microsec);
+        setBomb(GREEN, microsec, pixelsStart, pixelsEnd);
+      }
+      else if (colorName == "BLUE") {
+        //colorWipe(BLUE, microsec);
+        setBomb(BLUE, microsec,  pixelsStart, pixelsEnd);
+      }
+      else if (colorName == "YELLOW") {
+        //colorWipe(YELLOW, microsec);
+        setBomb(YELLOW, microsec, pixelsStart, pixelsEnd);
+      }
+      else if (colorName == "PINK") {
+        //colorWipe(PINK, microsec);
+        setBomb(PINK, microsec, pixelsStart, pixelsEnd);
+      }
+      else if (colorName == "ORANGE") {
+        //colorWipe(ORANGE, microsec);
+        setBomb(ORANGE, microsec,  pixelsStart, pixelsEnd);
+      }
+      else if (colorName == "WHITE") {
+        //colorWipe(WHITE, microsec);
+        setBomb(WHITE, microsec,  pixelsStart, pixelsEnd);
+      }
+      else if (colorName == "AQUA") {
+        //colorWipe(WHITE, microsec);
+        setBomb(AQUA, microsec,  pixelsStart, pixelsEnd);
+      }
+      else {
+        //colorWipe(PURPLE, microsec);
+        setBomb(colorName.toInt(), microsec,  pixelsStart, pixelsEnd);
+      }
+      //delay(1000);
+    }
   }
-  else if(str == "theaterchase") {
-    theaterChase(RED, microsec);
-    theaterChase(GREEN, microsec);
-    theaterChase(BLUE, microsec);
-    theaterChase(PURPLE, microsec);
+}
+
+String getValue(String data, char separator, int index)
+{
+  int found = 0;
+  int strIndex[] = {0, -1};
+  int maxIndex = data.length()-1;
+
+  for(int i=0; i<=maxIndex && found<=index; i++){
+    if(data.charAt(i)==separator || i==maxIndex){
+        found++;
+        strIndex[0] = strIndex[1]+1;
+        strIndex[1] = (i == maxIndex) ? i+1 : i;
+    }
   }
-  else if(str == "rainbow") {
-    rainbow_setup(20);
-    rainbow(10, 2500);
-    rainbowCycle(20);
-    theaterChaseRainbow(50);
-  }
-  else if(str == "RED") {
-    //colorWipe(RED, microsec);
-    setBomb(RED, microsec, pixelsStart, pixelsEnd);
-  }
-  else if(str == "GREEN") {
-    //colorWipe(GREEN, microsec);
-    setBomb(GREEN, microsec, pixelsStart, pixelsEnd);
-  }
-  else if (str == "BLUE") {
-    //colorWipe(BLUE, microsec);
-    setBomb(BLUE, microsec,  pixelsStart, pixelsEnd);
-  }
-  else if (str == "YELLOW") {
-    //colorWipe(YELLOW, microsec);
-    setBomb(YELLOW, microsec, pixelsStart, pixelsEnd);
-  }
-  else if (str == "PINK") {
-    //colorWipe(PINK, microsec);
-    setBomb(PINK, microsec, pixelsStart, pixelsEnd);
-  }
-  else if (str == "ORANGE") {
-    //colorWipe(ORANGE, microsec);
-    setBomb(ORANGE, microsec,  pixelsStart, pixelsEnd);
-  }
-  else if (str == "WHITE") {
-    //colorWipe(WHITE, microsec);
-    setBomb(WHITE, microsec,  pixelsStart, pixelsEnd);
-  }
-  else if (str == "AQUA") {
-    //colorWipe(WHITE, microsec);
-    setBomb(AQUA, microsec,  pixelsStart, pixelsEnd);
-  }
-  else {
-    //colorWipe(PURPLE, microsec);
-    setBomb(str.toInt(), microsec,  pixelsStart, pixelsEnd);
-  }
-  delay(1000);
+
+  return found>index ? data.substring(strIndex[0], strIndex[1]) : "";
 }
 
 void colorWipe(int color, int wait)
