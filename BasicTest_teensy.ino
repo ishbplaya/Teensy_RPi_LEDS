@@ -40,22 +40,6 @@
 
 #include <OctoWS2811.h>
 #include <Adafruit_NeoPixel.h>
-
-const int ledsPerStrip = 20;
-
-DMAMEM int displayMemory[ledsPerStrip*6];
-int drawingMemory[ledsPerStrip*6];
-
-const int config = WS2811_GRB | WS2811_800kHz;
-
-OctoWS2811 leds(ledsPerStrip, displayMemory, drawingMemory, config);
-
-void setup() {
-  Serial.begin(9600); //USB is always 12 Mbit/sec
-  leds.begin();
-  leds.show();
-}
-
 #define RED    0xFF0000
 #define GREEN  0x00FF00
 #define BLUE   0x0000FF
@@ -67,90 +51,60 @@ void setup() {
 #define BLANK  0x000000
 #define AQUA   0x00FFFF
 
-//Local Parameters
+//Global Parameters
 String str;
 char charBuf[100];
+const int ledsPerStrip = 20;
+DMAMEM int displayMemory[ledsPerStrip*6];
+int drawingMemory[ledsPerStrip*6];
+const int config = WS2811_GRB | WS2811_800kHz;
+OctoWS2811 leds(ledsPerStrip, displayMemory, drawingMemory, config);
+
+void setup() {
+  Serial.begin(9600); //USB is always 12 Mbit/sec
+  leds.begin();
+  leds.show();
+}
 
 void loop() {
   Serial.println("Waiting for data to come by... =(");
- 
-  //delay(1000); //do not print TOO fast!
-  if(Serial.available() > 1) //Typical serial data = RED,000,020;
+
+  if(Serial.available() > 1)
   {
     str = Serial.readString();
     str.toCharArray(charBuf, 100);
-    Serial.println(charBuf);
     char *p = charBuf;
     char *str;
     while ((str = strtok_r(p, ";", &p)) != NULL) {// delimiter is the semicolon
-       
-      String colorName = getValue(str,',',0);
-      int pixelsStart = getValue(str,',',1).toInt();
-      int pixelsEnd = getValue(str,',',2).toInt();
-      Serial.println("Color :" + getValue(str,',',0));
-      Serial.println("Start Pixel :" + getValue(str,',',1));
-      Serial.println("End Pixel :" + getValue(str,',',2));
+      String messageId = getValue(str,',',0);
       int microsec = 100000 / leds.numPixels();  // change them all in 0.1 seconds
-
-      // uncomment for voltage controlled speed
-      // millisec = analogRead(A9) / 40;
-      if(colorName == "clearall" || colorName == "ClearAll")
+      if(messageId == "C")
       {
         colorWipe(BLANK, microsec);
       }
-      else if(colorName == "colorwipe") {
-        colorWipe(RED, microsec);
-        colorWipe(GREEN, microsec);
-        colorWipe(BLUE, microsec);
-        colorWipe(PURPLE, microsec);
+      else if (messageId == "S")
+      {
+        leds.show();
       }
-      else if(colorName == "theaterchase") {
-        theaterChase(RED, microsec);
-        theaterChase(GREEN, microsec);
-        theaterChase(BLUE, microsec);
-        theaterChase(PURPLE, microsec);
+      else if (messageId == "P")
+      {
+        int colorName = getValue(str,',',1).toInt();
+        int pixelId = getValue(str,',',2).toInt();
+        leds.setPixel(pixelId, colorName);
+        
+        Serial.println("Color :" + colorName);
+        Serial.println("Pixel :" + pixelId);
       }
-      else if(colorName == "rainbow") {
-        rainbow_setup(20);
-        rainbow(10, 2500);
-        rainbowCycle(20);
-        theaterChaseRainbow(50);
-      }
-      else if(colorName == "RED") {
-        //colorWipe(RED, microsec);
-        setBomb(RED, microsec, pixelsStart, pixelsEnd);
-      }
-      else if(colorName == "GREEN") {
-        //colorWipe(GREEN, microsec);
-        setBomb(GREEN, microsec, pixelsStart, pixelsEnd);
-      }
-      else if (colorName == "BLUE") {
-        //colorWipe(BLUE, microsec);
-        setBomb(BLUE, microsec,  pixelsStart, pixelsEnd);
-      }
-      else if (colorName == "YELLOW") {
-        //colorWipe(YELLOW, microsec);
-        setBomb(YELLOW, microsec, pixelsStart, pixelsEnd);
-      }
-      else if (colorName == "PINK") {
-        //colorWipe(PINK, microsec);
-        setBomb(PINK, microsec, pixelsStart, pixelsEnd);
-      }
-      else if (colorName == "ORANGE") {
-        //colorWipe(ORANGE, microsec);
-        setBomb(ORANGE, microsec,  pixelsStart, pixelsEnd);
-      }
-      else if (colorName == "WHITE") {
-        //colorWipe(WHITE, microsec);
-        setBomb(WHITE, microsec,  pixelsStart, pixelsEnd);
-      }
-      else if (colorName == "AQUA") {
-        //colorWipe(WHITE, microsec);
-        setBomb(AQUA, microsec,  pixelsStart, pixelsEnd);
-      }
-      else {
-        //colorWipe(PURPLE, microsec);
-        setBomb(colorName.toInt(), microsec,  pixelsStart, pixelsEnd);
+      else if (messageId == "R")
+      {
+        int colorName = getValue(str,',',1).toInt();
+        int pixelsStart = getValue(str,',',2).toInt();
+        int pixelsEnd = getValue(str,',',3).toInt();
+        setRange(colorName, microsec,  pixelsStart, pixelsEnd);
+        
+        Serial.println("Color :" + colorName);
+        Serial.println("Start Pixel :" + pixelsStart);
+        Serial.println("End Pixel :" + pixelsEnd);
       }
       //delay(1000);
     }
@@ -183,16 +137,13 @@ void colorWipe(int color, int wait)
   }
 }
 
-void setBomb(int color, int wait, int pixelStart, int pixelEnd)
+void setRange(int color, int wait, int pixelStart, int pixelEnd)
 {
   for (int i=0; i < leds.numPixels(); i++) {
     if(i > pixelStart && i < pixelEnd) {
          leds.setPixel(i, color); 
     }
-//    else {
-//         leds.setPixel(i, BLANK);
-//    }
-    leds.show();
+    //leds.show();
     delayMicroseconds(wait);
   }
 }
